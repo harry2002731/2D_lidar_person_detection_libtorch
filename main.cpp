@@ -85,9 +85,8 @@ int main()
 
    Detector* dr = new Detector();
    auto ct = dr->scans_to_cutout_torch(scans, scan_phi);
-   ct = ct.unsqueeze(0);
+   ct = ct.unsqueeze(0); // Ôö¼ÓÎ¬¶È
 
-   std::cout << ct << std::endl;
 
    ct = ct.to("cuda");
 

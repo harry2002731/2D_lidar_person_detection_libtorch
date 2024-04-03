@@ -16,8 +16,8 @@ void canonical_to_global(torch::Tensor scan_r, torch::Tensor scan_phi, torch::Te
 }
 
 void rphi_to_xy(torch::Tensor &r, torch::Tensor &phi, torch::Tensor& pred_xs, torch::Tensor& pred_ys) {
-    pred_xs = r* torch::cos(phi);
-    pred_ys = r * torch::sin(phi);
+    pred_xs = r* -torch::sin(phi);
+    pred_ys = r * torch::cos(phi);
 }
 
 
@@ -113,9 +113,6 @@ void Detector::nms_predicted_center(
     torch::Tensor phi_grid,
     torch::Tensor pred_cls,
     torch::Tensor pred_reg,
-    //torch::Tensor& det_xys,
-    //torch::Tensor& det_cls,
-    //torch::Tensor& instance_mask,
     bool pred_reg_prev,
     float min_dist
 
@@ -130,15 +127,20 @@ void Detector::nms_predicted_center(
         torch::Tensor pred_xs, pred_ys;
         canonical_to_global(scan_grid, phi_grid, pred_reg.index({ 0, "...",0 }), pred_reg.index({ 0, "...",1 }), pred_r, pred_phi);
         rphi_to_xy(pred_r, pred_phi, pred_xs, pred_ys);
-        torch::Tensor sorted_indices = torch::argsort(pred_cls, /* descending = */ true);
-        std::cout << scan_grid << std::endl;
-        std::cout << phi_grid << std::endl;
-        std::cout << pred_reg << std::endl;
+        torch::Tensor sorted_indices = torch::argsort(pred_cls,0, /* descending = */ true);
+        sorted_indices = sorted_indices.transpose(0, 1);
+        //std::cout << sorted_indices << std::endl;
+        //std::cout << pred_xs << std::endl;
+
+        //std::cout << sorted_indices << std::endl;
 
 
-        pred_xs = torch::index_select(pred_xs, 0, sorted_indices);
-        pred_ys = torch::index_select(pred_ys, 0, sorted_indices);
-        pred_cls = torch::index_select(pred_cls, 0, sorted_indices);
+
+        pred_xs = torch::index_select(pred_xs, 0, sorted_indices[{0}]);
+        pred_ys = torch::index_select(pred_ys, 0, sorted_indices[{0}]);
+        pred_cls = torch::index_select(pred_cls, 0, sorted_indices[{0}]);
+
+
 
         // compute pair - wise distance
         int num_pts = scan_grid.sizes()[0];
@@ -149,13 +151,20 @@ void Detector::nms_predicted_center(
         torch::Tensor keep = torch::ones(num_pts, torch::kBool);
         instance_mask = torch::zeros(num_pts, torch::kInt32);
         torch::Tensor instance_id = torch::tensor({ 1.0 });
+
+
+        //std::cout << xdiff << std::endl;
+        //std::cout << ydiff << std::endl;
+        //std::cout << p_dist << std::endl;
+
         for (int i = 0; i < num_pts; i++)
         {
             if (!keep[i].item<bool>())
                 continue;
             torch::Tensor dup_inds = p_dist.lt(min_dist);
-            keep.index_put_({ dup_inds }, false);
-            keep.index_put_({ i }, false);
+
+            keep.index_put_({ dup_inds }, 0);//”–Œ Ã‚
+            keep.index_put_({ i }, 0);
             instance_mask.index_put({ sorted_indices.index({dup_inds}) }, instance_id);
             instance_id += 1;
 

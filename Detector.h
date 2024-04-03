@@ -21,9 +21,6 @@ public:
         torch::Tensor phi_grid,
         torch::Tensor pred_cls,
         torch::Tensor pred_reg,
-        //torch::Tensor& det_xys,
-        //torch::Tensor& det_cls,
-        //torch::Tensor& instance_mask,
         bool pred_reg_prev = 0,
         float min_dist = 0.5
 
