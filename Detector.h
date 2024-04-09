@@ -21,8 +21,11 @@ public:
         torch::Tensor phi_grid,
         torch::Tensor pred_cls,
         torch::Tensor pred_reg,
+        torch::Tensor& dets_xys,
+        torch::Tensor& dets_cls,
         bool pred_reg_prev = 0,
         float min_dist = 0.5
+
 
     );
 };
